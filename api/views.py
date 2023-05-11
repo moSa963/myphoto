@@ -74,7 +74,7 @@ class UserImageView(GenericAPIView):
             user = UserProfile.objects.get(username=username)
             return FileResponse(open(str(user.image), 'rb'))
         except:
-            return FileResponse(open('media/img/default/user.png', 'rb'))
+            return FileResponse(open('media/defaults/user.png', 'rb'))
 
 
 class UserList(ListAPIView):
