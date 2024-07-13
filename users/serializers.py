@@ -7,6 +7,17 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
         fields=["username", "first_name", "last_name", "email", "private", "verified"]
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        request = self.context.get('request')
+        
+        if not request or request.user != instance:
+            representation.pop("verified")
+            representation.pop("email")
+
+        return representation
+        
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
