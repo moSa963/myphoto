@@ -1,13 +1,18 @@
-from post.models import Post
-from follow.permissions import is_user_following
+from rest_framework import permissions
 
-def post_accessble(request, post: Post) -> bool:
-    if request.user.is_authenticated and request.user.id == post.user_id:
-        return True
-    elif not post.is_private:
-        if not post.user.is_private:
-            return True
-        else:
-            if request.user.is_authenticated and is_user_following(request.user, post.user):
-                return True
-    return False
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        is_authenticated = permissions.IsAuthenticated().has_permission(request, view)
+        
+        return is_authenticated and request.method in permissions.SAFE_METHODS
+    
+    def has_object_permission(self, request, view, obj):
+        is_authenticated = permissions.IsAuthenticated().has_permission(request, view)
+        
+        return is_authenticated and (request.method in permissions.SAFE_METHODS or obj.user == request.user)
+    
+class IsOwner(permissions.BasePermission):
+    
+    def has_object_permission(self, request, view, obj):
+        return obj.user == request.user
