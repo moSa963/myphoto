@@ -1,9 +1,10 @@
 from django.urls import path, include
-from .views import PostView, PostImageView, PostList
+from .views import PostView, PostCreateView, PostImageView
+
+app_name = "posts"
 
 urlpatterns = [
-    path('image/<int:id>', PostImageView.as_view()),
-    path('<int:id>', PostView.as_view()),
-    path('list', PostList.as_view()),
-    path('', PostView.as_view()),
+    path('<int:id>/image/<str:name>', PostImageView.as_view(), name="image"),
+    path('<int:id>', PostView.as_view(), name="show"),
+    path('', PostCreateView.as_view(), name="create"),
 ]
