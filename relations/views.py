@@ -2,7 +2,7 @@ from django.db.models.expressions import F, Case, When
 from django.db.models.fields import BooleanField
 from django.db.models.query_utils import Q
 from api.models import UserProfile
-from follow.serializers import FollowSerializer
+from relations.serializers import FollowSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Follow
