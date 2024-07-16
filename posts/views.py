@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
 from .serializers import PostSerializer
 from .permissions import IsOwnerOrReadOnly
 from rest_framework.permissions import IsAuthenticated
@@ -35,6 +35,14 @@ class PostCreateView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class PostListView(ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes=[IsAuthenticated]
+    
+    def get_queryset(self):
+        query = Post.objects.related_posts(self.request.user, self.request.GET.get("sort", "new"))
+        return query
 
 class PostImageView(GenericAPIView):
     permission_classes = [IsAuthenticated]
