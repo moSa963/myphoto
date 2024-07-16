@@ -1,19 +1,19 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APIClient, APITransactionTestCase
 from rest_framework import status
-from django.contrib.auth import get_user_model
 from django.test import override_settings
 import shutil
 from django.core.files.storage import default_storage
 from tests.helpers.post_helpers import createPost, addImageToPost, createImage, getMediaRoot
+from tests.helpers.user_helpers import create_user 
 
 TEST_DIR = getMediaRoot()
 
 @override_settings(MEDIA_ROOT=TEST_DIR)
-class TestPostView(APITestCase):
+class TestPostView(APITransactionTestCase):
     def setUp(self):
-        self.user = get_user_model().objects.create_user(username='admin', password='password')
+        self.user = create_user(username='admin', password='password')
         self.client = APIClient()
         self.client.login(username='admin', password='password')
     
@@ -55,11 +55,32 @@ class TestPostView(APITestCase):
         self.assertEqual(post.images.count(), 3)
         self.assertEqual(len(default_storage.listdir(post.images_folder())[1]), 3)
         
+        
+@override_settings(MEDIA_ROOT=TEST_DIR)
+class TestPostListView(APITransactionTestCase):
+    def setUp(self):
+        self.user = create_user(username='admin', password='password')
+        self.client = APIClient()
+        self.client.login(username='admin', password='password')
+    
+    def test_user_can_get_a_list_of_related_posts(self):
+        createPost(self.user, "title")
+        createPost(self.user, "title2")
+        
+        createPost(create_user(username="user", password="pass", private=True), "title4")
+        
+        response = self.client.get(reverse('posts:list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        js = response.json()
+        self.assertEqual(len(js), 2)
+            
+        
 @override_settings(MEDIA_ROOT=getMediaRoot())
-class TestPostImageView(APITestCase):
+class TestPostImageView(APITransactionTestCase):
     
     def setUp(self) -> None:
-        self.user = get_user_model().objects.create_user(username='admin', password='password')
+        self.user = create_user(username='admin', password='password')
         self.client = APIClient()
         self.client.login(username='admin', password='password')
     
