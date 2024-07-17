@@ -4,7 +4,18 @@ from posts.models import User
 from typing import Self
 
 class PostManager(models.Manager):
+
     def related_posts(self, user: User, order_by: str="new") -> Self:
+        q = self.select_related("user").filter(
+            Q(user_id=user.id) | (Q(user__followers__user_id=user.id) & Q(user__followers__verified=True))
+                ).prefetch_related('images')
+        
+        q = self._order(q, order_by)
+        
+        return q
+    
+    
+    def accessible_posts(self, user: User, order_by: str="new") -> Self:
         q = self.select_related("user").filter(
             Q(user_id=user.id) |
                 (Q(private=False) &
