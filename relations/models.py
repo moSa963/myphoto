@@ -1,14 +1,16 @@
 from django.db import models
-from api.models import UserProfile
+from users.models import User
 
 # Create your models here.
 class Follow(models.Model):
-    id = models.CharField(max_length=100, primary_key=True)
-    user = models.ForeignKey(to=UserProfile, on_delete=models.CASCADE, related_name='following')
-    following = models.ForeignKey(to=UserProfile, on_delete=models.CASCADE, related_name='followers')
-    is_verified = models.BooleanField(default=False)
-    following_date = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(to=User, on_delete=models.CASCADE, related_name='following')
+    followed_user = models.ForeignKey(to=User, on_delete=models.CASCADE, related_name='followers')
+    verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'follow'
-        unique_together =(('user_id', 'following_id'),)
+        unique_together =(('user_id', 'followed_user_id'),)
+    
+    def set_verified(self):
+        self.verified = True
+        self.save()
