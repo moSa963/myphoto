@@ -1,9 +1,11 @@
-from django.contrib.auth.models import User
-from .models import Follow
+from django.core.exceptions import PermissionDenied
+from relations.models import Follow
 
-def is_user_following(user: User, following: User) -> bool:
-    follow = Follow.objects.filter(user_id=user.id, following_id=following.id).first()
 
-    if follow and follow.is_verified:
-        return True
-    return False
+
+def is_user_accessible(request, user):
+    if user.id != request.user.id and user.private:
+        if not Follow.objects.filter(user_id=request.user.id, followed_user__id=user.id, verified=True).exists():
+            raise PermissionDenied("You cannot access this user information.")
+
+    
