@@ -23,7 +23,7 @@ def addImageToPost(post: Post) -> PostImage:
     return image
     
 def createPost(user, title) -> Post:
-    post = Post.objects.create(user=user, title=title)
+    post = Post.objects.create(user=user, title=title, private=False)
 
     addImageToPost(post)
     
