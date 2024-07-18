@@ -1,10 +1,13 @@
-from .views import FollowView, FollowersListView, FollowingListView
+from .views import FollowView, AcceptFollowView, FollowingListView, FollowersListView
 from django.urls import path
 
 
+app_name = "relations"
+
 urlpatterns = [
-    path('following/<str:username>', FollowingListView.as_view()),
-    path('followers/<str:username>', FollowersListView.as_view()),
-    path('accept/<str:id>', FollowView.as_view()),
-    path('<str:username>', FollowView.as_view()),
+    path('<str:username>', FollowView.as_view(), name="follow"),
+    path('accept/<str:username>', AcceptFollowView.as_view(), name="accept"),
+    path('<str:username>/following/list', FollowingListView.as_view(), name="following"),
+    path('<str:username>/followers/list', FollowersListView.as_view(), name="followers"),
 ]
+    
