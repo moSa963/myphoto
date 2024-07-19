@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, PostImage
+from .models import Post, PostImage, PostLike
 from users.serializers import UserSerializer
 
 class PostImageSerializer(serializers.ModelSerializer):
@@ -60,4 +60,24 @@ class PostSerializer(serializers.ModelSerializer):
             serializer.save()
         
         return post
+
+
+class PostLikeSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    post_id = serializers.IntegerField()
+    
+    user_id = serializers.IntegerField(write_only=True)
+    
+    created_at = serializers.DateTimeField(read_only=True)
+    
+    class Meta:
+        model=PostLike
+        fields=("user", "user_id", "post_id", "created_at")
         
+    def create(self, validated_data):
+        user_id = validated_data["user_id"]
+        post_id = validated_data["post_id"]
+
+        like = PostLike.objects.get_or_create(user_id=user_id, post_id=post_id)
+        
+        return like
