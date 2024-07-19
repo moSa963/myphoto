@@ -2,7 +2,7 @@ from typing import Any
 from django.db import models
 from users.models import User
 from uuid import uuid4
-from posts.manager import PostImageManager, PostManager
+from posts.manager import PostImageManager, PostManager, PostLikeManager
 from django.core.files.storage import default_storage
 
 # Create your models here.
@@ -49,3 +49,14 @@ class PostImage(models.Model):
         
         if default_storage.exists(self.image.path):
             default_storage.delete(self.image.path)
+            
+
+class PostLike(models.Model):
+    user = models.ForeignKey(to=User, on_delete=models.CASCADE, related_name='likes')
+    post = models.ForeignKey(to=Post, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now=True)
+    
+    objects = PostLikeManager()
+    
+    class Meta:
+        unique_together = (('user_id', 'post_id'),)

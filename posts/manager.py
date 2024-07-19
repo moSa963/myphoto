@@ -35,6 +35,17 @@ class PostManager(models.Manager):
             by = "created_at"
             
         return q.order_by(by)
+
+
+class PostLikeManager(models.Manager):
+    
+    def related_likes(self, user: User):
+        q = self.select_related("user").filter(Q(user_id=user.id) | Q(user__private=False) |
+                        (Q(user__followers__user_id=user.id) & Q(user__followers__verified=True))
+                    )
+
+        return q
+    
     
 class PostImageManager(models.Manager):
     def delete(self) -> tuple[int, dict[str, int]]:
