@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'users',
     'posts',
     'relations',
-    'comment',
+    'comments',
     'history',
 ]
 
