@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from rest_framework.generics import GenericAPIView, ListAPIView
-from .serializers import PostSerializer
-from .permissions import IsOwnerOrReadOnly
+from .serializers import PostSerializer, PostLikeSerializer
+from .permissions import IsOwnerOrReadOnly, is_post_accessible
 from rest_framework.permissions import IsAuthenticated
-from .models import Post
+from .models import Post, PostLike
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
@@ -56,3 +56,46 @@ class PostImageView(GenericAPIView):
             raise Http404()
         
         return FileResponse(open(image.image.path, 'rb'))
+
+
+class PostLikeView(GenericAPIView):
+    serializer_class=PostLikeSerializer
+    permission_classes=[IsAuthenticated]
+    
+    def post(self, request, **kwargs):
+        post = get_object_or_404(Post, id=kwargs['id'])
+        
+        is_post_accessible(request, post)
+        
+        serializer = self.get_serializer(data={
+            "user_id": request.user.id,
+            "post_id": post.id,
+        })
+
+        serializer.is_valid(raise_exception=True)        
+        serializer.save()
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def delete(self, request, **kwargs):
+        post = get_object_or_404(Post, id=kwargs['id'])
+        
+        like = PostLike.objects.filter(user_id=request.user.id, post_id=post.id).first()
+
+        if like:
+            like.delete()
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class LikeListView(ListAPIView):
+    serializer_class=PostLikeSerializer
+    permission_classes=[IsAuthenticated]
+    
+    def get_queryset(self):
+        post = get_object_or_404(Post, id=self.kwargs['id'])
+        
+        is_post_accessible(self.request, post)
+        
+        q = post.likes.related_likes(self.request.user)
+        
+        return q
