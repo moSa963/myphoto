@@ -1,4 +1,4 @@
-from posts.models import Post, PostImage
+from posts.models import Post, PostImage, PostLike
 from PIL import Image
 from io import BytesIO
 
@@ -22,9 +22,18 @@ def addImageToPost(post: Post) -> PostImage:
     
     return image
     
-def createPost(user, title) -> Post:
-    post = Post.objects.create(user=user, title=title, private=False)
+def createPost(user, title, private=False) -> Post:
+    post = Post.objects.create(user=user, title=title, private=private)
 
     addImageToPost(post)
     
     return post
+
+def like_post(user, post):
+    
+    like = PostLike.objects.create(
+        user=user,
+        post=post
+    )
+    
+    return like

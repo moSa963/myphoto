@@ -5,8 +5,10 @@ from rest_framework import status
 from django.test import override_settings
 import shutil
 from django.core.files.storage import default_storage
-from tests.helpers.post_helpers import createPost, addImageToPost, createImage, getMediaRoot
+from tests.helpers.post_helpers import createPost, addImageToPost, createImage, getMediaRoot, like_post
 from tests.helpers.user_helpers import create_user 
+from tests.helpers.relation_helpers import create_follow 
+from posts.models import PostLike
 
 TEST_DIR = getMediaRoot()
 
@@ -102,7 +104,98 @@ class TestPostImageView(APITransactionTestCase):
         )
         
         
-
+@override_settings(MEDIA_ROOT=getMediaRoot())
+class TestPostLikeView(APITransactionTestCase):
+    
+    def setUp(self) -> None:
+        self.user = create_user(username='admin', password='password')
+        self.client = APIClient()
+        self.client.login(username='admin', password='password')
         
+    
+    def test_user_can_like_a_post(self):
+        post = createPost(create_user(username="username"), "title")
+        
+        self.assertEqual(post.likes.count(), 0)
+        
+        response = self.client.post(reverse("posts:like", kwargs={
+            "id": post.id,
+        }))
+        
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        
+        self.assertEqual(post.likes.count(), 1)
+    
+    def test_user_cannot_like_a_private_post(self):
+        post = createPost(create_user(username="username"), "title", private=True)
+        
+        self.assertEqual(post.likes.count(), 0)
+        
+        response = self.client.post(reverse("posts:like", kwargs={
+            "id": post.id,
+        }))
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        self.assertEqual(post.likes.count(), 0)
+    
+    def test_user_cannot_like_a_post_created_by_a_private_user(self):
+        post = createPost(create_user(username="username", private=True), "title")
+        
+        self.assertEqual(post.likes.count(), 0)
+        
+        response = self.client.post(reverse("posts:like", kwargs={
+            "id": post.id,
+        }))
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        self.assertEqual(post.likes.count(), 0)
+        
+    def test_user_can_unlike_a_post(self):
+        post = createPost(create_user(username="username"), "title")
+        PostLike.objects.create(user_id=self.user.id, post_id=post.id)
+        
+        self.assertEqual(post.likes.count(), 1)
+        
+        response = self.client.delete(reverse("posts:like", kwargs={
+            "id": post.id,
+        }))
+        
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        
+        self.assertEqual(post.likes.count(), 0)
+
+@override_settings(MEDIA_ROOT=getMediaRoot())
+class TestPostLikeListView(APITransactionTestCase):
+    
+    def setUp(self) -> None:
+        self.user = create_user(username='admin', password='password')
+        self.client = APIClient()
+        self.client.login(username='admin', password='password')
+        
+    
+    def test_user_can_get_a_list_of_users_who_liked_a_post(self):
+        post = createPost(create_user(username="username"), "title")
+        
+        like_post(self.user, post)
+        like_post(create_user(username="user1"), post)
+        like_post(create_user(username="user2", private=True), post)
+        user3 = create_user(username="user3", private=True)
+        create_follow(self.user, user3)
+        like_post(user3, post)
+        
+        
+        self.assertEqual(post.likes.count(), 4)
+        
+        response = self.client.get(reverse("posts:like_list", kwargs={
+            "id": post.id,
+        }))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        js = response.json()
+        self.assertEqual(len(js), 3)
+    
+    
 def tearDownModule():
     shutil.rmtree(TEST_DIR, ignore_errors=True)
