@@ -75,7 +75,7 @@ class TestPostListView(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         js = response.json()
-        self.assertEqual(len(js), 2)
+        self.assertEqual(len(js["results"]), 2)
             
         
 @override_settings(MEDIA_ROOT=getMediaRoot())
@@ -194,7 +194,7 @@ class TestPostLikeListView(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         js = response.json()
-        self.assertEqual(len(js), 3)
+        self.assertEqual(len(js["results"]), 3)
     
     
 def tearDownModule():

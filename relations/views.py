@@ -62,7 +62,7 @@ class FollowingListView(ListAPIView):
         
         is_user_accessible(self.request, user)
         
-        query = user.following
+        query = user.following.get_queryset()
 
         if user.id != auth.id:
             query = query.filter(Q(followed_user__private=False) | (Q(followed_user__followers__user_id=auth.id) & Q(followed_user__followers__verified=True)))
@@ -80,7 +80,8 @@ class FollowersListView(ListAPIView):
 
         is_user_accessible(self.request, user)
         
-        query = user.followers
+        query = user.followers.get_queryset()
+        
         
         if user.id != auth.id:
             query = query.filter(Q(user__private=True) | (Q(user__followers__user_id=auth.id) & Q(user__followers__verified=True)))

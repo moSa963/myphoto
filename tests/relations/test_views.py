@@ -77,7 +77,7 @@ class TestFollowingListView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         js = response.json()
-        self.assertEqual(len(js), 2)
+        self.assertEqual(len(js["results"]), 2)
         self.assertEqual(self.user.following.count(), 2)
     
     def test_user_can_get_a_list_of_other_user_followed_users(self):
@@ -97,7 +97,7 @@ class TestFollowingListView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         js = response.json()
-        self.assertEqual(len(js), 2)
+        self.assertEqual(len(js["results"]), 2)
         
     def test_user_cannot_get_a_list_of_a_private_users_followed_users(self):
         user = create_user(username="username", password="password", private=True)
@@ -127,7 +127,7 @@ class TestFollowersListView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         js = response.json()
-        self.assertEqual(len(js), 2)
+        self.assertEqual(len(js["results"]), 2)
     
     
     def test_user_can_get_a_list_of_other_user_followers(self):
@@ -148,7 +148,7 @@ class TestFollowersListView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         js = response.json()
-        self.assertEqual(len(js), 2)
+        self.assertEqual(len(js["results"]), 2)
         
     def test_user_cannot_get_a_list_of_a_private_user_followers(self):
         user = create_user(username="username", password="password", private=True)
