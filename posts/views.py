@@ -16,7 +16,7 @@ class PostView(GenericAPIView):
     
     def get(self, request, **kwargs):
         id = kwargs.get('id', 0)
-        serializer = PostSerializer(instance=get_object_or_404(Post, id=id))
+        serializer = self.get_serializer(instance=get_object_or_404(Post, id=id))
 
         return Response(serializer.data)
 
@@ -80,7 +80,7 @@ class PostLikeView(GenericAPIView):
     def delete(self, request, **kwargs):
         post = get_object_or_404(Post, id=kwargs['id'])
         
-        like = PostLike.objects.filter(user_id=request.user.id, post_id=post.id).first()
+        like = post.likes.filter(user_id=request.user.id).first()
 
         if like:
             like.delete()

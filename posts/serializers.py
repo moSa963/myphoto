@@ -29,9 +29,42 @@ class PostSerializer(serializers.ModelSerializer):
     private = serializers.BooleanField(default=True)
     images = PostImageSerializer(many=True, read_only=True)
     
+    likes_count = serializers.IntegerField(read_only=True)
+    comments_count = serializers.IntegerField(read_only=True)
+    liked = serializers.BooleanField(read_only=True)
+        
     class Meta:
         model = Post
-        fields = ("user", "title", "description", "private", "created_at", "images")
+        fields = ("user", "title", "description", "private", "created_at", "images", "likes_count", "liked", "comments_count")
+
+    def to_representation(self, instance):
+        json = super().to_representation(instance)
+        
+        if json.get("likes_count", None) == None:
+            json['likes_count'] = self.get_likes_count(instance)
+        
+        if json.get("comments_count", None) == None:
+            json['comments_count'] = self.get_comments_count(instance)
+            
+        if json.get("liked", None) == None:
+            json['liked'] = self.get_liked(instance)
+        
+        return json
+        
+        
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+    
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+    
+    def get_liked(self, obj):
+        user = self.context.get('user')
+        
+        if not user:
+            return False
+        
+        return obj.likes.filter('user_id', user.id).exists()
     
     def create(self, validated_data):
         request = self.context['request']
