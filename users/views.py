@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from rest_framework.generics import GenericAPIView, ListAPIView
-from .serializers import UserCreateSerializer, UserSerializer, LoginSerializer, UserUpdateSerializer
+from .serializers import UserCreateSerializer, UserSerializer, LoginSerializer, UserUpdateSerializer, UserListSerializer
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt import tokens
-from .models import User as UserModel
 from django.shortcuts import get_object_or_404
 from django.http.response import FileResponse
 from rest_framework import status 
+from django.contrib.auth import get_user_model
 
 class AuthUser(GenericAPIView):
     serializer_class=UserSerializer
@@ -60,7 +60,7 @@ class User(GenericAPIView):
     permission_classes=[permissions.IsAuthenticated]
 
     def get(self, request, **kwargs):
-        user = get_object_or_404(UserModel, username=kwargs['username'])
+        user = get_object_or_404(get_user_model(), username=kwargs['username'])
         serializer = UserSerializer(instance=user)
         return Response(serializer.data)
 
@@ -68,16 +68,16 @@ class UserImageView(GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, **kwargs):
-        user = get_object_or_404(UserModel, username=kwargs['username'])
+        user = get_object_or_404(get_user_model(), username=kwargs['username'])
         return FileResponse(open(user.image.path, 'rb'))
 
 class UsersList(ListAPIView):
-    serializer_class = UserSerializer
+    serializer_class = UserListSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         key = self.request.GET.get('key', '')
 
-        query = UserModel.objects.filter(username__icontains=key)
+        query = get_user_model().objects.for_user(self.request.user, key)
 
         return query

@@ -4,9 +4,28 @@ from rest_framework import authentication
 
 
 class UserSerializer(serializers.ModelSerializer):
+    followers_count = serializers.SerializerMethodField(read_only=True)
+    following_count = serializers.SerializerMethodField(read_only=True)
+    following_status = serializers.SerializerMethodField(read_only=True)
+    
+    def get_followers_count(self, obj):
+        return obj.followers.count()
+    
+    def get_following_count(self, obj):
+        return obj.following.count()
+
+    
+    def get_following_status(self, obj):
+        user = self.context.get('user')
+        
+        if not user:
+            return None
+        
+        return obj.followers.filter(user_id=user.id, verified=True).exists()
+    
     class Meta:
         model=User
-        fields=["username", "first_name", "last_name", "email", "private", "verified"]
+        fields=["username", "first_name", "last_name", "email", "private", "verified", "followers_count", "following_count", "following_status"]
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -18,8 +37,11 @@ class UserSerializer(serializers.ModelSerializer):
 
         return representation
         
-
-
+class UserListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=["username", "first_name", "last_name","private", "following_status", "followers_count"]
+    
 class UserCreateSerializer(serializers.ModelSerializer):
     username = serializers.RegexField(regex=r'^[a-zA-Z]+([._-]?[a-zA-Z0-9]+)+$', min_length=3, required=True)
     password = serializers.CharField(write_only=True, required=True)
