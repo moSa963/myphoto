@@ -1,23 +1,75 @@
-from django.db.models.aggregates import Count
-from django.db.models.query_utils import Q
-from comment.models import Comment
-from api.serializers import UserSerializer
 from rest_framework import serializers
+from comments.models import PostComment, CommentLike
+from users.serializers import UserSerializer
 
-class CommentSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
+
+class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
     post_id = serializers.IntegerField()
-    content = serializers.CharField(max_length=1000)
-    date = serializers.DateTimeField(read_only=True)
-    user_liked = serializers.IntegerField(read_only=True)
-    likes = serializers.IntegerField(source="like", read_only=True)
-
+    content = serializers.CharField()
+    created_at = serializers.DateTimeField(read_only=True)
+    
+    likes_count = serializers.IntegerField(read_only=True)
+    liked = serializers.BooleanField(read_only=True)
+    
     class Meta:
-        model = Comment
-        fields = ['id', 'user', 'post_id', "content", 'date']
+        model=PostComment
+        fields=("user", "user_id", "post_id", "created_at", "content", "likes_count", "liked")
+    
+    def to_representation(self, instance):
+        json = super().to_representation(instance)
+        
+        if json.get("likes_count", None) == None:
+            json['likes_count'] = self.get_likes_count(instance)
+        
+        if json.get("liked", None) == None:
+            json['liked'] = self.get_liked(instance)
+            
+        return json
+    
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+    
+    def get_liked(self, obj):
+        user = self.context.get('user')
+        
+        if not user:
+            return False
+        
+        return obj.likes.filter('user_id', user.id).exists()
+    
+    def create(self, validated_data):
+        user = validated_data["user_id"]
+        post = validated_data["post_id"]
+        content = validated_data["content"]
+        
+        comment = PostComment.objects.create(
+            user_id=user,
+            post_id=post,
+            content=content
+        )
+        
+        return comment
+        
+
+
+class CommentLikeSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    comment_id = serializers.IntegerField()
+    
+    user_id = serializers.IntegerField(write_only=True)
+    
+    created_at = serializers.DateTimeField(read_only=True)
+    
+    class Meta:
+        model=CommentLike
+        fields=("user", "user_id", "comment_id", "created_at")
         
     def create(self, validated_data):
-        comment = Comment(user_id=self.context["request"].user.id,  **validated_data)
-        comment.save()
-        return comment
+        user_id = validated_data["user_id"]
+        comment_id = validated_data["comment_id"]
+
+        like = CommentLike.objects.get_or_create(user_id=user_id, comment_id=comment_id)
+        
+        return like
