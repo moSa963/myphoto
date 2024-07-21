@@ -1,15 +1,19 @@
-from post.models import Post
-from api.models import UserProfile
 from django.db import models
-
+from users.models import User
+from posts.models import Post
 # Create your models here.
 
-class Comment(models.Model):
-    user = models.ForeignKey(to=UserProfile, on_delete=models.CASCADE, related_name="comments")
+
+class PostComment(models.Model):
+    user = models.ForeignKey(to=User, on_delete=models.CASCADE, related_name="comments")
     post = models.ForeignKey(to=Post, on_delete=models.CASCADE, related_name="comments")
-    content = models.CharField(max_length=1000)
-    date = models.DateTimeField(auto_now_add=True)
+    content = models.TextField(blank=False)
+    created_at = models.DateTimeField(auto_now=True)
 
+class CommentLike(models.Model):
+    user = models.ForeignKey(to=User, on_delete=models.CASCADE, related_name='comments_likes')
+    comment = models.ForeignKey(to=PostComment, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now=True)
+    
     class Meta:
-        app_label = 'post'
-
+        unique_together = (('user_id', 'comment_id'),)
