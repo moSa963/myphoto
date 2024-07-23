@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
 from django.http import Http404, FileResponse
+from django.contrib.auth import get_user_model
+from relations.permissions import is_user_accessible
 
 # Create your views here.
 class PostView(GenericAPIView):
@@ -42,6 +44,19 @@ class PostListView(ListAPIView):
     
     def get_queryset(self):
         query = Post.objects.related_posts(self.request.user, self.request.GET.get("sort", "new"))
+        return query
+
+class UsersPostsListView(ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes=[IsAuthenticated]
+    
+    def get_queryset(self):
+        user = get_object_or_404(get_user_model(), username=self.kwargs['username'])
+        
+        is_user_accessible(self.request, user)
+        
+        query = user.posts.for_user(self.request.user, self.request.GET.get("sort", "new"))
+        
         return query
 
 class PostImageView(GenericAPIView):
@@ -96,6 +111,20 @@ class LikeListView(ListAPIView):
         
         is_post_accessible(self.request, post)
         
-        q = post.likes.related_likes(self.request.user)
+        q = post.likes.for_user(self.request.user)
+        
+        return q
+    
+    
+class UsersLikedPostsListView(ListAPIView):
+    serializer_class = PostLikeSerializer
+    permission_classes=[IsAuthenticated]
+    
+    def get_queryset(self):
+        user = get_object_or_404(get_user_model(), username=self.kwargs['username'])
+        
+        is_user_accessible(self.request, user)
+        
+        q = user.likes.for_user(user)
         
         return q
