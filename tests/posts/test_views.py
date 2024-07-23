@@ -195,7 +195,84 @@ class TestPostLikeListView(APITransactionTestCase):
         
         js = response.json()
         self.assertEqual(len(js["results"]), 3)
+
+@override_settings(MEDIA_ROOT=getMediaRoot())
+class TestUsersPostsListView(APITransactionTestCase):
     
+    def setUp(self) -> None:
+        self.user = create_user(username='admin', password='password')
+        self.client = APIClient()
+        self.client.login(username='admin', password='password')
     
+    def test_user_can_get_his_posts_list(self):
+        createPost(self.user, "title")
+        createPost(self.user, "title2")
+        createPost(create_user(username="user", private=True), "title4")
+        
+        response = self.client.get(reverse('posts:users_list', kwargs={"username": self.user.username}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        js = response.json()
+        self.assertEqual(len(js["results"]), 2)
+    
+    def test_user_can_get_a_user_posts_list(self):
+        user = create_user(username="username1")
+        createPost(user, "title")
+        createPost(user, "title2")
+        createPost(user, "title3", private=True)
+        
+        response = self.client.get(reverse('posts:users_list', kwargs={"username": user.username}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        js = response.json()
+        self.assertEqual(len(js["results"]), 2)
+        
+    def test_user_cannot_get_a_private_user_posts_list(self):
+        user = create_user(username="username1", private=True)
+        createPost(user, "title")
+        
+        response = self.client.get(reverse('posts:users_list', kwargs={"username": user.username}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+@override_settings(MEDIA_ROOT=getMediaRoot())
+class TestUsersLikedPostsListView(APITransactionTestCase):
+    
+    def setUp(self) -> None:
+        self.user = create_user(username='admin', password='password')
+        self.client = APIClient()
+        self.client.login(username='admin', password='password')
+    
+    def test_user_can_get_his_liked_posts(self):
+        like_post(self.user, createPost(create_user(username="username1"), "title"))
+        like_post(self.user, createPost(self.user, "title2"))
+        like_post(self.user, createPost(create_user(username="username2"), "title", private=True))
+        like_post(self.user, createPost(create_user(username="user", private=True), "title4"))
+        
+        response = self.client.get(reverse('posts:users_liked_list', kwargs={"username": self.user.username}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        js = response.json()
+        self.assertEqual(len(js["results"]), 2)
+    
+    def test_user_can_get_a_user_liked_posts(self):
+        user = create_user(username="username")
+        like_post(user, createPost(create_user(username="username1"), "title"))
+        like_post(user, createPost(self.user, "title2"))
+        like_post(user, createPost(create_user(username="username2"), "title", private=True))
+        like_post(user, createPost(create_user(username="user", private=True), "title4"))
+        
+        response = self.client.get(reverse('posts:users_liked_list', kwargs={"username": user.username}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        js = response.json()
+        self.assertEqual(len(js["results"]), 2)
+    
+    def test_user_cannot_get_a_private_user_liked_posts(self):
+        user = create_user(username="username", private=True)
+        like_post(user, createPost(create_user(username="username1"), "title"))
+        
+        response = self.client.get(reverse('posts:users_liked_list', kwargs={"username": user.username}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
 def tearDownModule():
     shutil.rmtree(TEST_DIR, ignore_errors=True)
