@@ -38,6 +38,9 @@ class UserSerializer(serializers.ModelSerializer):
         return representation
         
 class UserListSerializer(serializers.ModelSerializer):
+    followers_count = serializers.IntegerField(read_only=True)
+    following_status = serializers.BooleanField(read_only=True)
+    
     class Meta:
         model=User
         fields=["username", "first_name", "last_name","private", "following_status", "followers_count"]
