@@ -17,8 +17,9 @@ class PostView(GenericAPIView):
     permission_classes = [IsOwnerOrReadOnly]
     
     def get(self, request, **kwargs):
-        id = kwargs.get('id', 0)
-        serializer = self.get_serializer(instance=get_object_or_404(Post, id=id))
+        user = get_object_or_404(Post, id=kwargs["id"])
+        
+        serializer = self.get_serializer(instance=user)
 
         return Response(serializer.data)
 
