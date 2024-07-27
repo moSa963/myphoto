@@ -12,7 +12,7 @@ class PostImageSerializer(serializers.ModelSerializer):
         fields=("post_id", "image", "url")
     
     def get_url(self, obj):
-        return f"/posts/{obj.post_id}/image/{obj.image.name.split('/')[-1]}"
+        return f"api/posts/{obj.post_id}/image/{obj.image.name.split('/')[-1]}"
     
     def create(self, validated_data):
         post_id = validated_data.get('post_id')
@@ -23,6 +23,7 @@ class PostImageSerializer(serializers.ModelSerializer):
         return post_image
 
 class PostSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
     user = UserSerializer(read_only=True)
     title = serializers.CharField(max_length=50, default='')
     description = serializers.CharField(default="")
@@ -35,7 +36,7 @@ class PostSerializer(serializers.ModelSerializer):
         
     class Meta:
         model = Post
-        fields = ("user", "title", "description", "private", "created_at", "images", "likes_count", "liked", "comments_count")
+        fields = ("id", "user", "title", "description", "private", "created_at", "images", "likes_count", "liked", "comments_count")
 
     def to_representation(self, instance):
         json = super().to_representation(instance)
