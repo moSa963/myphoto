@@ -4,6 +4,7 @@ from users.serializers import UserSerializer
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
     user = UserSerializer(read_only=True)
     user_id = serializers.IntegerField(write_only=True)
     post_id = serializers.IntegerField()
@@ -15,7 +16,7 @@ class CommentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model=PostComment
-        fields=("user", "user_id", "post_id", "created_at", "content", "likes_count", "liked")
+        fields=("id", "user", "user_id", "post_id", "created_at", "content", "likes_count", "liked")
     
     def to_representation(self, instance):
         json = super().to_representation(instance)
