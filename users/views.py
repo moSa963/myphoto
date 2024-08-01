@@ -65,11 +65,15 @@ class User(GenericAPIView):
         return Response(serializer.data)
 
 class UserImageView(GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-
     def get(self, request, **kwargs):
         user = get_object_or_404(get_user_model(), username=kwargs['username'])
-        return FileResponse(open(user.image.path, 'rb'))
+
+        path = "media/defaults/user.png"
+        
+        if user.image:
+            path = user.image.path
+            
+        return FileResponse(open(path, 'rb'))
 
 class UsersList(ListAPIView):
     serializer_class = UserListSerializer

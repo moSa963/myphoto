@@ -20,6 +20,6 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         if self.pk:
             old_image = User.objects.get(pk=self.pk).image
-            if self.image != old_image and os.path.isfile(old_image.path):
+            if old_image and self.image != old_image and os.path.isfile(old_image.path):
                 os.remove(old_image.path)
         super().save(*args, **kwargs)
