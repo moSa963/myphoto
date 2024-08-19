@@ -65,8 +65,8 @@ class FollowingListView(ListAPIView):
         query = user.following.get_queryset()
 
         if user.id != auth.id:
-            query = query.filter(Q(followed_user__private=False) | (Q(followed_user__followers__user_id=auth.id) & Q(followed_user__followers__verified=True)))
-            
+            query = query.filter(Q(Q(followed_user__private=False) | (Q(followed_user__followers__user_id=auth.id) & Q(followed_user__followers__verified=True))) & Q(verified=True))
+        
         return query
 
     
@@ -82,8 +82,9 @@ class FollowersListView(ListAPIView):
         
         query = user.followers.get_queryset()
         
-        
         if user.id != auth.id:
-            query = query.filter(Q(user__private=True) | (Q(user__followers__user_id=auth.id) & Q(user__followers__verified=True)))
+            query = query.filter(Q(Q(user__private=False) | (Q(user__followers__user_id=auth.id) & Q(user__followers__verified=True))) & Q(verified=True))
+        else:
+            query = query.filter(Q(verified= True if self.request.GET.get("unverified") != "true" else False))
         
         return query
