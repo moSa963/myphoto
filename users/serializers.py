@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
     following_status = serializers.SerializerMethodField(read_only=True)
     
     def get_followers_count(self, obj):
-        return obj.followers.count()
+        return obj.followers.filter(verified=True).count()
     
     def get_following_count(self, obj):
         return obj.following.count()
