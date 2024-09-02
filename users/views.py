@@ -61,7 +61,7 @@ class User(GenericAPIView):
 
     def get(self, request, **kwargs):
         user = get_object_or_404(get_user_model(), username=kwargs['username'])
-        serializer = UserSerializer(instance=user)
+        serializer = self.get_serializer(instance=user)
         return Response(serializer.data)
 
 class UserImageView(GenericAPIView):
