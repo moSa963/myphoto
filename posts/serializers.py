@@ -60,12 +60,12 @@ class PostSerializer(serializers.ModelSerializer):
         return obj.comments.count()
     
     def get_liked(self, obj):
-        user = self.context.get('user')
+        request = self.context.get('request')
         
-        if not user:
+        if not request:
             return False
         
-        return obj.likes.filter('user_id', user.id).exists()
+        return obj.likes.filter(user_id=request.user.id).exists()
     
     def create(self, validated_data):
         request = self.context['request']

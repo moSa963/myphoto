@@ -33,12 +33,12 @@ class CommentSerializer(serializers.ModelSerializer):
         return obj.likes.count()
     
     def get_liked(self, obj):
-        user = self.context.get('user')
+        request = self.context.get("request")
         
-        if not user:
+        if not request or not request.user:
             return False
         
-        return obj.likes.filter('user_id', user.id).exists()
+        return obj.likes.filter(user_id=request.user.id).exists()
     
     def create(self, validated_data):
         user = validated_data["user_id"]

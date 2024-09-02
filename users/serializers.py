@@ -16,12 +16,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     
     def get_following_status(self, obj):
-        user = self.context.get('user')
+        request = self.context.get("request")
         
-        if not user:
+        if not request:
             return None
         
-        return obj.followers.filter(user_id=user.id, verified=True).exists()
+        return obj.followers.filter(user_id=request.user.id, verified=True).exists()
     
     class Meta:
         model=User
