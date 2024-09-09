@@ -118,7 +118,7 @@ class LikeListView(ListAPIView):
     
     
 class UsersLikedPostsListView(ListAPIView):
-    serializer_class = PostLikeSerializer
+    serializer_class = PostSerializer
     permission_classes=[IsAuthenticated]
     
     def get_queryset(self):
@@ -126,6 +126,6 @@ class UsersLikedPostsListView(ListAPIView):
         
         is_user_accessible(self.request, user)
         
-        q = user.likes.for_user(user)
+        q = Post.objects.for_user(user).filter(likes__user_id=user.id)
         
         return q
